@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* منع قص الحروف العربية وضبط التباعد */
+body {
+  line-height: 1.6;
+}
