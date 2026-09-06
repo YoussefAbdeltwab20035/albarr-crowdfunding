@@ -1,25 +1,28 @@
 import axios from 'axios';
 
-// إنشاء نسخة Axios مخصصة مع الرابط الأساسي للـ Backend
+// إنشاء نسخة Axios مخصصة مع الرابط الأساسي للـ Backend السحابي على Railway
 const API = axios.create({
-  baseURL: 'http://localhost:5000/api',
+  baseURL: import.meta.env.VITE_API_URL || 'https://albarr-crowdfunding-production.up.railway.app/api',
   headers: {
-    'Content-Type': 'application/json'
-  }
+    'Content-Type': 'application/json',
+  },
 });
 
 // إضافة التوكن تلقائياً مع أي طلب يتطلب مصادقة
-API.interceptors.request.use((config) => {
-  const token = localStorage.getItem('albarr_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+API.interceptors.request.use(
+  (config) => {
+    const token = localStorage.getItem('albarr_token');
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`;
+    }
+    return config;
+  },
+  (error) => Promise.reject(error)
+);
 
 // ========== مسارات الحملات (Campaigns) ==========
 
-// جلب الحملات المعتمدة للواجهة
+// جلب الحملات للواجهة
 export const fetchCampaigns = async (params = {}) => {
   const response = await API.get('/campaigns', { params });
   return response.data;
@@ -37,9 +40,21 @@ export const createCampaignAPI = async (campaignData) => {
   return response.data;
 };
 
-// تعديل أو اعتماد حملة (للأدمن)
+// تعديل بيانات حملة (للأدمن)
+export const updateCampaignAPI = async (id, updatedData) => {
+  const response = await API.put(`/campaigns/${id}`, updatedData);
+  return response.data;
+};
+
+// تبديل حالة توثيق حملة (للأدمن)
 export const toggleVerifyCampaignAPI = async (id) => {
   const response = await API.put(`/campaigns/${id}/toggle-verify`);
+  return response.data;
+};
+
+// حذف حملة (للأدمن)
+export const deleteCampaignAPI = async (id) => {
+  const response = await API.delete(`/campaigns/${id}`);
   return response.data;
 };
 
@@ -62,7 +77,7 @@ export const fetchTransactionsAPI = async () => {
 // تسجيل الدخول
 export const loginAPI = async (credentials) => {
   const response = await API.post('/auth/login', credentials);
-  if (response.data.token) {
+  if (response.data?.token) {
     localStorage.setItem('albarr_token', response.data.token);
     localStorage.setItem('albarr_user', JSON.stringify(response.data));
   }
@@ -72,7 +87,7 @@ export const loginAPI = async (credentials) => {
 // تسجيل حساب جديد
 export const registerAPI = async (userData) => {
   const response = await API.post('/auth/register', userData);
-  if (response.data.token) {
+  if (response.data?.token) {
     localStorage.setItem('albarr_token', response.data.token);
     localStorage.setItem('albarr_user', JSON.stringify(response.data));
   }
